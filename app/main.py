@@ -8,13 +8,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.routers import (
+    admin,
     analytics,
     auth,
     comparison,
     deals,
+    export,
     favorites,
     health,
     market,
+    portfolio,
     properties,
     saved_searches,
 )
@@ -57,6 +60,9 @@ def create_app() -> FastAPI:
     app.include_router(market.router)
     app.include_router(analytics.router)
     app.include_router(saved_searches.router)
+    app.include_router(portfolio.router)
+    app.include_router(export.router)
+    app.include_router(admin.router)
 
     @app.get("/", tags=["system"])
     def root() -> dict:

@@ -215,6 +215,76 @@ def create_app() -> Flask:
             flash(f"Could not delete: {exc}", "danger")
         return redirect(url_for("saved"))
 
+    @app.route("/portfolio")
+    def portfolio():
+        if not session.get("token"):
+            flash("Please sign in to view your portfolio.", "warning")
+            return redirect(url_for("login"))
+        data = None
+        try:
+            data = _api("GET", "/api/portfolio", auth=True).json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load portfolio: {exc}", "danger")
+        return render_template("portfolio.html", data=data)
+
+    @app.route("/portfolio/add", methods=["POST"])
+    def portfolio_add():
+        if not session.get("token"):
+            return redirect(url_for("login"))
+
+        def num(k):
+            v = request.form.get(k)
+            return float(v) if v else 0
+
+        payload = {
+            "address": request.form.get("address", ""), "city": request.form.get("city", ""),
+            "property_type": request.form.get("property_type", "House"),
+            "purchase_price": num("purchase_price"), "current_value": num("current_value"),
+            "monthly_rent": num("monthly_rent"), "monthly_expenses": num("monthly_expenses"),
+            "mortgage_balance": num("mortgage_balance"),
+            "purchase_date": request.form.get("purchase_date") or None,
+        }
+        try:
+            _api("POST", "/api/portfolio", json=payload, auth=True)
+            flash("Property added to your portfolio.", "success")
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not add: {exc}", "danger")
+        return redirect(url_for("portfolio"))
+
+    @app.route("/portfolio/<int:hid>/delete", methods=["POST"])
+    def portfolio_delete(hid: int):
+        try:
+            _api("DELETE", f"/api/portfolio/{hid}", auth=True)
+            flash("Removed from portfolio.", "info")
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not remove: {exc}", "danger")
+        return redirect(url_for("portfolio"))
+
+    @app.route("/admin")
+    def admin():
+        if (session.get("user") or {}).get("role") != "admin":
+            flash("Admin access only.", "warning")
+            return redirect(url_for("index"))
+        stats = users = None
+        try:
+            stats = _api("GET", "/api/admin/stats", auth=True).json()
+            users = _api("GET", "/api/admin/users", auth=True).json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load admin data: {exc}", "danger")
+        return render_template("admin.html", stats=stats, users=users)
+
+    @app.route("/admin/users/<int:uid>", methods=["POST"])
+    def admin_user(uid: int):
+        if (session.get("user") or {}).get("role") != "admin":
+            return redirect(url_for("index"))
+        body = {"role": request.form.get("role"), "is_active": bool(request.form.get("is_active"))}
+        try:
+            _api("PATCH", f"/api/admin/users/{uid}", json=body, auth=True)
+            flash("User updated.", "success")
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not update user: {exc}", "danger")
+        return redirect(url_for("admin"))
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

@@ -3,6 +3,7 @@ from app.models.user import User, UserRole  # noqa: F401
 from app.models.property import Property, Alert  # noqa: F401
 from app.models.engagement import Favorite, SavedSearch  # noqa: F401
 from app.models.audit import AuditLog  # noqa: F401
+from app.models.portfolio import PortfolioHolding  # noqa: F401
 
 __all__ = [
     "User",
@@ -12,4 +13,5 @@ __all__ = [
     "Favorite",
     "SavedSearch",
     "AuditLog",
+    "PortfolioHolding",
 ]

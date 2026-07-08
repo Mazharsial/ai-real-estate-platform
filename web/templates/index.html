@@ -48,6 +48,11 @@
   <input type="hidden" name="property_type" value="{{ criteria.get('property_type','Any') }}">
   <button class="btn btn-outline-secondary btn-sm">★ Save this search</button>
   <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('analytics', city=criteria.get('city','Dallas')) }}">📈 Analytics</a>
+  <span class="ms-2 small text-muted">Export:</span>
+  {% set c = criteria.get('city','Dallas') %}
+  <a class="btn btn-outline-secondary btn-sm" href="{{ api_base }}/api/export/properties?format=csv&city={{ c }}">CSV</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ api_base }}/api/export/properties?format=xlsx&city={{ c }}">Excel</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ api_base }}/api/export/properties?format=json&city={{ c }}">JSON</a>
 </form>
 
 {% if note %}<div class="alert alert-warning py-2 small">ℹ️ {{ note }}</div>{% endif %}

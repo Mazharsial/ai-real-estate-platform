@@ -17,7 +17,7 @@ class UserLogin(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    email: EmailStr
+    email: str  # plain str on output — never fail serialization on legacy/edge data
     full_name: str
     role: str
     is_active: bool

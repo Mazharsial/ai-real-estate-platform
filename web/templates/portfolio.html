@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Portfolio — DealFinder AI{% endblock %}
+{% block content %}
+<h1 class="h4 fw-bold mb-3">💼 Portfolio Manager</h1>
+
+{% if data and data.count %}
+<div class="row g-3 mb-4">
+  {% set tiles = [('Portfolio value', data.total_value|money, 'teal'),
+                  ('Total equity', data.total_equity|money, 'indigo'),
+                  ('Monthly cash flow', data.total_monthly_cash_flow|money, 'rose'),
+                  ('Overall ROI', data.overall_roi ~ '%', 'amber')] %}
+  {% for label, value, tint in tiles %}
+  <div class="col-6 col-md-3"><div class="card stat stat-{{ tint }} h-100"><div class="card-body py-3">
+    <div class="h5 fw-bold mb-0">{{ value }}</div><div class="small text-muted">{{ label }}</div>
+  </div></div></div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">Holdings ({{ data.count }})</h3>
+      <div class="table-responsive"><table class="table table-sm align-middle">
+        <thead><tr><th>Property</th><th class="text-end">Value</th><th class="text-end">Equity</th>
+          <th class="text-end">Cash flow/mo</th><th class="text-end">ROI</th><th class="text-end">Apprec.</th><th></th></tr></thead>
+        <tbody>
+          {% for h in data.holdings %}
+          <tr>
+            <td><div class="fw-semibold">{{ h.address or '—' }}</div><div class="small text-muted">{{ h.city }} · {{ h.property_type }}</div></td>
+            <td class="text-end">{{ h.current_value|money }}</td>
+            <td class="text-end">{{ h.equity|money }}</td>
+            <td class="text-end {{ 'text-success' if h.monthly_cash_flow>=0 else 'text-danger' }}">{{ h.monthly_cash_flow|money }}</td>
+            <td class="text-end">{{ h.roi }}%</td>
+            <td class="text-end {{ 'text-success' if h.appreciation>=0 else 'text-danger' }}">{{ h.appreciation_pct }}%</td>
+            <td class="text-end"><form method="post" action="{{ url_for('portfolio_delete', hid=h.id) }}">
+              <button class="btn btn-sm btn-outline-danger">✕</button></form></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">Diversification by type</h3>
+      <canvas id="divChart" height="180"></canvas>
+    </div></div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-secondary">Your portfolio is empty. Add your first property below.</div>
+{% endif %}
+
+<div class="card mt-4"><div class="card-body">
+  <h3 class="h6 fw-bold mb-3">➕ Add a property</h3>
+  <form method="post" action="{{ url_for('portfolio_add') }}" class="row g-2">
+    <div class="col-md-4"><input class="form-control form-control-sm" name="address" placeholder="Address" required></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="city" placeholder="City"></div>
+    <div class="col-md-2">
+      <select class="form-select form-select-sm" name="property_type">
+        {% for t in ['House','Condo','Townhouse','Apartment','Commercial','Land'] %}<option>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="purchase_price" type="number" placeholder="Purchase $" required></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="current_value" type="number" placeholder="Current $"></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="monthly_rent" type="number" placeholder="Rent/mo"></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="monthly_expenses" type="number" placeholder="Expenses/mo"></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="mortgage_balance" type="number" placeholder="Mortgage bal."></div>
+    <div class="col-md-2"><input class="form-control form-control-sm" name="purchase_date" type="date"></div>
+    <div class="col-md-2"><button class="btn btn-brand btn-sm w-100">Add</button></div>
+  </form>
+</div></div>
+{% endblock %}
+
+{% block scripts %}
+{% if data and data.count %}
+<script>
+  const div = {{ data.diversification_type|tojson }};
+  new Chart(document.getElementById('divChart'), {
+    type:'doughnut',
+    data:{ labels: div.map(d=>d.label), datasets:[{ data: div.map(d=>d.count),
+      backgroundColor:['#0d9488','#6366f1','#d97706','#e11d48','#0284c7','#7c3aed'] }] },
+    options:{ plugins:{legend:{position:'bottom'}} }
+  });
+</script>
+{% endif %}
+{% endblock %}

@@ -66,7 +66,7 @@ uvicorn app.main:app --reload --port 8000
 python -m flask --app web/app.py run --port 5001
 
 # optional — seed an admin user + demo data
-python scripts/seed.py        # admin@platform.local / admin12345
+python scripts/seed.py        # admin@platform.com / admin12345
 ```
 
 > No API keys? It still runs: the built-in **demo dataset** powers everything, and the AI advisor
@@ -166,9 +166,11 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 10. Property Comparison | ✅ done |
 | 12. PDF Investment Reports | ✅ done |
 | 13. Analytics Dashboard | ✅ done |
-| 14. Portfolio Manager | ⏳ next |
-| 15. Automation (n8n, daily scan) | ⏳ next |
-| Admin panel · CSV/Excel export · rate limiting · CI/CD | ⏳ next |
+| 14. Portfolio Manager | ✅ done |
+| Admin panel (users, roles, stats) | ✅ done |
+| CSV / Excel / JSON export | ✅ done |
+| 15. Automation (n8n, daily scan, email alerts) | ⏳ next |
+| Rate limiting · CSRF · CI/CD · CSV import | ⏳ next |
 
 ---
 

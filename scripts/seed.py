@@ -16,7 +16,7 @@ from app.core.security import hash_password  # noqa: E402
 from app.models.user import User, UserRole  # noqa: E402
 from app.services.property_service import run_search  # noqa: E402
 
-ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@platform.local")
+ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@platform.com")
 ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "admin12345")
 
 
