@@ -41,6 +41,15 @@
   </div>
 </form>
 
+<form method="post" action="{{ url_for('save_search') }}" class="mb-3">
+  <input type="hidden" name="city" value="{{ criteria.get('city','Dallas') }}">
+  <input type="hidden" name="max_price" value="{{ criteria.get('max_price','') }}">
+  <input type="hidden" name="min_beds" value="{{ criteria.get('min_beds','') }}">
+  <input type="hidden" name="property_type" value="{{ criteria.get('property_type','Any') }}">
+  <button class="btn btn-outline-secondary btn-sm">★ Save this search</button>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('analytics', city=criteria.get('city','Dallas')) }}">📈 Analytics</a>
+</form>
+
 {% if note %}<div class="alert alert-warning py-2 small">ℹ️ {{ note }}</div>{% endif %}
 
 {% if stats %}

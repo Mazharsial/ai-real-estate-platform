@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Analytics — DealFinder AI{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 fw-bold mb-0">📈 Analytics Dashboard <small class="text-muted fw-normal">— {{ city }}</small></h1>
+  <form class="d-flex gap-2">
+    <input class="form-control form-control-sm" name="city" value="{{ city }}" style="max-width:160px">
+    <button class="btn btn-sm btn-brand">Refresh</button>
+  </form>
+</div>
+
+{% if a %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card stat stat-teal"><div class="card-body py-3"><div class="h5 fw-bold mb-0">{{ a.count }}</div><div class="small text-muted">Properties</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat stat-indigo"><div class="card-body py-3"><div class="h5 fw-bold mb-0">{{ a.avg_score }}/100</div><div class="small text-muted">Avg score</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat stat-amber"><div class="card-body py-3"><div class="h5 fw-bold mb-0">{{ a.avg_price|money }}</div><div class="small text-muted">Avg price</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat stat-rose"><div class="card-body py-3"><div class="h5 fw-bold mb-0">{{ a.avg_yield }}%</div><div class="small text-muted">Avg yield</div></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h3 class="h6 fw-bold mb-3">Investment score distribution</h3><canvas id="scoreDist" height="150"></canvas>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h3 class="h6 fw-bold mb-3">Property mix by type</h3><canvas id="typeMix" height="150"></canvas>
+  </div></div></div>
+  <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+    <h3 class="h6 fw-bold mb-3">Price vs. investment score</h3><canvas id="scatter" height="150"></canvas>
+  </div></div></div>
+  <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+    <h3 class="h6 fw-bold mb-3">Opportunities by category</h3><canvas id="deals" height="200"></canvas>
+  </div></div></div>
+</div>
+{% else %}
+<div class="alert alert-secondary">No analytics available.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if a %}
+<script>
+  const A = {{ a|tojson }};
+  new Chart(scoreDist,{type:'bar',data:{labels:A.score_distribution.map(d=>d.range),
+    datasets:[{data:A.score_distribution.map(d=>d.count),backgroundColor:['#e11d48','#d97706','#0284c7','#059669']}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  new Chart(typeMix,{type:'doughnut',data:{labels:A.by_type.map(d=>d.type),
+    datasets:[{data:A.by_type.map(d=>d.count),backgroundColor:['#0d9488','#6366f1','#d97706','#e11d48','#0284c7']}]},
+    options:{plugins:{legend:{position:'right'}}}});
+  new Chart(scatter,{type:'scatter',data:{datasets:[{label:'Properties',
+    data:A.price_vs_score.map(p=>({x:p.price,y:p.score})),backgroundColor:'#0d9488'}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Price ($)'}},y:{title:{display:true,text:'Score'},max:100}}}});
+  new Chart(deals,{type:'bar',data:{labels:A.deal_counts.map(d=>d.title),
+    datasets:[{data:A.deal_counts.map(d=>d.count),backgroundColor:'#6366f1'}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
+</script>
+{% endif %}
+{% endblock %}

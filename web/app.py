@@ -165,6 +165,56 @@ def create_app() -> Flask:
             flash(f"Comparison error: {exc}", "danger")
         return render_template("compare.html", all_props=all_props, result=result, selected=ids)
 
+    @app.route("/analytics")
+    def analytics():
+        city = request.args.get("city", "Dallas")
+        a = None
+        try:
+            a = _api("GET", f"/api/analytics/summary?city={city}").json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load analytics: {exc}", "danger")
+        return render_template("analytics.html", a=a, city=city)
+
+    @app.route("/save-search", methods=["POST"])
+    def save_search():
+        if not session.get("token"):
+            flash("Please sign in to save searches.", "warning")
+            return redirect(url_for("login"))
+        filters = {}
+        for k in ("city", "max_price", "min_beds", "property_type"):
+            v = request.form.get(k)
+            if v and v != "Any":
+                filters[k] = float(v) if k == "max_price" else int(v) if k == "min_beds" else v
+        name = request.form.get("name") or f"{filters.get('city', 'All')} search"
+        try:
+            _api("POST", "/api/saved-searches",
+                 json={"name": name, "filters": filters, "alert_enabled": False}, auth=True)
+            flash("Search saved.", "success")
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not save: {exc}", "danger")
+        return redirect(request.referrer or url_for("index"))
+
+    @app.route("/saved")
+    def saved():
+        if not session.get("token"):
+            flash("Please sign in to view saved searches.", "warning")
+            return redirect(url_for("login"))
+        rows = []
+        try:
+            rows = _api("GET", "/api/saved-searches", auth=True).json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load saved searches: {exc}", "danger")
+        return render_template("saved.html", rows=rows)
+
+    @app.route("/saved/<int:sid>/delete", methods=["POST"])
+    def delete_saved(sid: int):
+        try:
+            _api("DELETE", f"/api/saved-searches/{sid}", auth=True)
+            flash("Saved search removed.", "info")
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not delete: {exc}", "danger")
+        return redirect(url_for("saved"))
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

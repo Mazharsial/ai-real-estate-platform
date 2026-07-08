@@ -1,12 +1,16 @@
 """Property discovery, analysis & AI advice (Modules 2, 5, 6, 8)."""
 from __future__ import annotations
 
+import io
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.property import AnalyzeRequest, PropertyOut, SearchCriteria, SearchResult
 from app.services.ai.advisor import investment_advice
+from app.services.reports import build_property_report
 from app.services.property_service import (
     analyze_one,
     get_property,
@@ -62,3 +66,19 @@ def advice(property_id: int, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(status_code=404, detail="Property not found")
     bundle = analyze_one(p)
     return {"property_id": property_id, "advice": investment_advice(bundle["property"], bundle["financials"])}
+
+
+@router.get("/{property_id}/report")
+def report(property_id: int, db: Session = Depends(get_db)) -> StreamingResponse:
+    p = get_property(db, property_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Property not found")
+    bundle = analyze_one(p)
+    advice = investment_advice(bundle["property"], bundle["financials"])
+    pdf = build_property_report(bundle, advice)
+    filename = f"investment-report-{property_id}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
