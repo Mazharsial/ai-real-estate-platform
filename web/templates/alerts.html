@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Deal Alerts — DealFinder AI{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 fw-bold mb-0">🔔 Deal Alerts <small class="text-muted fw-normal">— {{ city }}</small></h1>
+  <form class="d-flex gap-2">
+    <input class="form-control form-control-sm" name="city" value="{{ city }}" style="max-width:160px">
+    <input type="hidden" name="scan" value="1">
+    <button class="btn btn-sm btn-brand">Run scan now</button>
+  </form>
+</div>
+<p class="text-muted small">The automated daily scan flags new undervalued / high-score deals. Connect the
+  n8n workflow to email these to you every morning.</p>
+
+{% if scan %}
+<div class="alert alert-{{ 'success' if scan.new_deals else 'secondary' }}">
+  <b>{{ scan.new_deals }}</b> new qualifying deal{{ '' if scan.new_deals == 1 else 's' }} found in {{ scan.city }}.
+</div>
+{% endif %}
+
+<div class="card"><div class="card-body">
+  <h3 class="h6 fw-bold mb-3">Recent alerts</h3>
+  {% if alerts %}
+  <div class="list-group list-group-flush">
+    {% for a in alerts %}
+    <div class="list-group-item px-0 d-flex justify-content-between align-items-start">
+      <div><span class="badge text-bg-light me-2">{{ a.kind }}</span>{{ a.message }}</div>
+      <small class="text-muted text-nowrap ms-2">{{ a.created_at[:10] if a.created_at }}</small>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-muted small">No alerts yet. Click <b>Run scan now</b> to generate today's deal alerts.</div>
+  {% endif %}
+</div></div>
+
+{% endblock %}

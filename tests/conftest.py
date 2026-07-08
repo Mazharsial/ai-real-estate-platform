@@ -7,6 +7,7 @@ os.environ["GEMINI_API_KEY"] = ""
 os.environ["AI_PROVIDER"] = "gemini"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["RENTCAST_API_KEY"] = ""
+os.environ["RATE_LIMIT_PER_MINUTE"] = "100000"  # don't throttle the test suite
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

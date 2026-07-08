@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     DEFAULT_CITY: str = "Dallas"
     DEFAULT_STATE: str = "TX"
 
+    # Security
+    RATE_LIMIT_PER_MINUTE: int = 120
+
     # CORS (comma separated)
     CORS_ORIGINS: str = "http://localhost:5001,http://127.0.0.1:5001"
 

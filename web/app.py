@@ -285,6 +285,18 @@ def create_app() -> Flask:
             flash(f"Could not update user: {exc}", "danger")
         return redirect(url_for("admin"))
 
+    @app.route("/alerts")
+    def alerts():
+        city = request.args.get("city", "Dallas")
+        scan, alist = None, []
+        try:
+            if request.args.get("scan"):
+                scan = _api("GET", f"/api/monitor/scan?city={city}").json()
+            alist = _api("GET", "/api/monitor/alerts").json().get("alerts", [])
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load alerts: {exc}", "danger")
+        return render_template("alerts.html", alerts=alist, scan=scan, city=city)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

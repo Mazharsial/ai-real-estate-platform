@@ -16,13 +16,16 @@ from app.api.routers import (
     export,
     favorites,
     health,
+    import_data,
     market,
+    monitor,
     portfolio,
     properties,
     saved_searches,
 )
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 
 
 @asynccontextmanager
@@ -50,6 +53,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RateLimitMiddleware)
 
     app.include_router(health.router)
     app.include_router(auth.router)
@@ -63,6 +68,8 @@ def create_app() -> FastAPI:
     app.include_router(portfolio.router)
     app.include_router(export.router)
     app.include_router(admin.router)
+    app.include_router(monitor.router)
+    app.include_router(import_data.router)
 
     @app.get("/", tags=["system"])
     def root() -> dict:

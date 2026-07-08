@@ -169,16 +169,19 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 14. Portfolio Manager | ✅ done |
 | Admin panel (users, roles, stats) | ✅ done |
 | CSV / Excel / JSON export | ✅ done |
-| 15. Automation (n8n, daily scan, email alerts) | ⏳ next |
-| Rate limiting · CSRF · CI/CD · CSV import | ⏳ next |
+| 15. Automation (n8n daily scan + alerts) | ✅ done |
+| Security: rate limiting, headers, audit log | ✅ done (CSRF tokens next) |
+| CI/CD (GitHub Actions) · CSV import | ✅ done |
 
 ---
 
 ## 🔒 Security notes
 - Passwords hashed with `pbkdf2_sha256`; JWT bearer auth; role-based guards.
+- **Rate limiting** (per-IP sliding window) + **security headers** middleware.
+- **Audit logging** of auth events; admin-only endpoints for user management.
 - Secrets via environment only (`.env` gitignored). Pydantic validation on all inputs.
 - SQLAlchemy ORM (parameterized) prevents SQL injection; Jinja2 autoescaping mitigates XSS.
-- Next: rate limiting, CSRF on Flask forms, audit-log wiring, secure file uploads.
+- Next: CSRF tokens on Flask forms, secure file-upload scanning.
 
 ## ⚠️ Disclaimer
 Estimates and AI output are for research/education only — **not financial advice**. Respect all
