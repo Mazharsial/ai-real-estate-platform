@@ -40,3 +40,15 @@ body { background: #f5f8fd; color: #1e293b; }
 .advice { background: linear-gradient(135deg,#eef2ff,#fff); }
 .fin td:last-child { text-align:right; font-variant-numeric: tabular-nums; }
 .leaflet-container { border-radius:12px; }
+
+/* Deal Finder mini cards */
+.deal-mini { color:inherit; overflow:hidden; transition: box-shadow .15s, transform .15s; }
+.deal-mini:hover { transform: translateY(-3px); box-shadow: 0 16px 28px -22px rgba(13,148,136,.6); }
+.mini-img { width:84px; min-width:84px; background-size:cover; background-position:center; }
+
+/* Compare table */
+.compare-table th, .compare-table td { text-align:center; }
+.compare-table th:first-child, .compare-table td:first-child { text-align:left; }
+.compare-table .winner { background:#ecfdf5; }
+.compare-table thead .winner { color:#0f766e; }
+.hover-row:hover { background:#f1f5f9; }

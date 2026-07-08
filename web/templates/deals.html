@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import mini %}
+{% block title %}Deal Finder — DealFinder AI{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 fw-bold mb-0">🔎 Deal Finder <small class="text-muted fw-normal">— {{ city }}</small></h1>
+  <form class="d-flex gap-2">
+    <input class="form-control form-control-sm" name="city" value="{{ city }}" style="max-width:160px">
+    <button class="btn btn-sm btn-brand">Scan</button>
+  </form>
+</div>
+<p class="text-muted small">Every listing is automatically bucketed into opportunity categories — the top picks in each.</p>
+
+{% for c in data.categories %}
+<section class="mb-4">
+  <div class="d-flex align-items-baseline gap-2 mb-2">
+    <h2 class="h6 fw-bold mb-0">{{ c.title }}</h2>
+    <span class="small text-muted">{{ c.description }}</span>
+    <span class="badge text-bg-light ms-auto">{{ c.count }}</span>
+  </div>
+  <div class="row g-2">
+    {% for p in c.properties %}
+      <div class="col-sm-6 col-lg-4 col-xl-3">{{ mini(p) }}</div>
+    {% else %}
+      <div class="col"><div class="text-muted small fst-italic">No properties match this category right now.</div></div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% endblock %}

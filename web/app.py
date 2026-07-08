@@ -133,6 +133,38 @@ def create_app() -> Flask:
             flash(f"Could not save: {exc}", "danger")
         return redirect(request.referrer or url_for("index"))
 
+    @app.route("/deals")
+    def deals():
+        city = request.args.get("city", "Dallas")
+        data = {"categories": []}
+        try:
+            data = _api("GET", f"/api/deals?city={city}").json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load deals: {exc}", "danger")
+        return render_template("deals.html", data=data, city=city)
+
+    @app.route("/market")
+    def market():
+        city = request.args.get("city", "Dallas")
+        m = None
+        try:
+            m = _api("GET", f"/api/market/overview?city={city}").json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Could not load market data: {exc}", "danger")
+        return render_template("market.html", m=m, city=city)
+
+    @app.route("/compare")
+    def compare():
+        ids = [int(i) for i in request.args.getlist("ids") if str(i).isdigit()]
+        all_props, result = [], None
+        try:
+            all_props = _api("GET", "/api/properties?limit=100").json()
+            if len(ids) >= 2:
+                result = _api("POST", "/api/comparison", json={"ids": ids}).json()
+        except Exception as exc:  # noqa: BLE001
+            flash(f"Comparison error: {exc}", "danger")
+        return render_template("compare.html", all_props=all_props, result=result, selected=ids)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

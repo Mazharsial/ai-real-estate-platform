@@ -161,9 +161,9 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 8. AI Investment Advisor | ✅ done |
 | 11. Saved searches / favorites | 🟡 favorites done; saved searches + alerts next |
 | 4. Maps (dashboard + detail) | ✅ basic (nearby search next) |
-| 7. Market Analysis | ⏳ next |
-| 9. Deal Finder (categories) | ⏳ next |
-| 10. Property Comparison | ⏳ next |
+| 7. Market Analysis | ✅ done |
+| 9. Deal Finder (categories) | ✅ done |
+| 10. Property Comparison | ✅ done |
 | 12. PDF Investment Reports | ⏳ next |
 | 13. Analytics Dashboard | ⏳ next |
 | 14. Portfolio Manager | ⏳ next |

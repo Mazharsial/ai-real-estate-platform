@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Compare — DealFinder AI{% endblock %}
+{% block content %}
+
+<h1 class="h4 fw-bold mb-3">⚖️ Compare properties</h1>
+
+<form method="get" class="card card-body mb-4">
+  <div class="small text-muted mb-2">Select two or more properties, then compare.</div>
+  <div class="row g-1" style="max-height:220px;overflow:auto">
+    {% for p in all_props %}
+    <div class="col-md-6">
+      <label class="d-flex gap-2 align-items-center small p-1 rounded hover-row">
+        <input class="form-check-input mt-0" type="checkbox" name="ids" value="{{ p.id }}" {{ 'checked' if p.id in selected }}>
+        <span class="text-truncate">{{ p.address }} — {{ p.price|money }}</span>
+        <span class="badge text-bg-light ms-auto">⭐{{ p.investment_score }}</span>
+      </label>
+    </div>
+    {% endfor %}
+  </div>
+  <div><button class="btn btn-brand btn-sm mt-2">Compare selected</button></div>
+</form>
+
+{% if result %}
+{% set rows = [
+  ('Price', 'price', 'money'), ('Price / sqft', 'price_per_sqft', 'money'),
+  ('Undervalued', 'undervalued_pct', 'pct'), ('Beds', 'beds', ''), ('Baths', 'baths', ''),
+  ('Size (sqft)', 'sqft', ''), ('Rental yield', 'rental_yield', 'pct'),
+  ('School', 'school_rating', ''), ('Safety', 'crime_score', ''),
+  ('Appreciation', 'appreciation_trend', 'pct'), ('3-yr est value', 'predicted_value_3yr', 'money'),
+  ('Investment score', 'investment_score', '') ] %}
+<div class="table-responsive mb-3">
+  <table class="table compare-table align-middle">
+    <thead><tr><th>Metric</th>
+      {% for p in result.properties %}
+      <th class="{{ 'winner' if p.id==result.winner_id }}">{{ p.address }}{% if p.id==result.winner_id %} 🏆{% endif %}</th>
+      {% endfor %}
+    </tr></thead>
+    <tbody>
+      {% for label, key, fmt in rows %}
+      <tr><td class="text-muted">{{ label }}</td>
+        {% for p in result.properties %}
+        <td class="{{ 'winner' if p.id==result.winner_id }}">
+          {% if fmt=='money' %}{{ p[key]|money }}{% elif fmt=='pct' %}{{ p[key] }}%{% else %}{{ p[key] }}{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+      {% set fin_rows = [('Cap rate','cap_rate','pct'),('Cash-on-cash','cash_on_cash','pct'),('Monthly cash flow','monthly_cash_flow','money')] %}
+      {% for label, key, fmt in fin_rows %}
+      <tr><td class="text-muted">{{ label }}</td>
+        {% for p in result.properties %}
+        <td class="{{ 'winner' if p.id==result.winner_id }}">
+          {% if fmt=='money' %}{{ p.financials[key]|money }}{% else %}{{ p.financials[key] }}%{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card advice"><div class="card-body">
+  <div class="text-uppercase small fw-semibold text-brand mb-1">🤖 AI recommendation</div>
+  <p class="mb-0" style="white-space:pre-line">{{ result.recommendation }}</p>
+</div></div>
+{% elif selected %}
+<div class="alert alert-warning">Select at least two properties to compare.</div>
+{% endif %}
+
+{% endblock %}

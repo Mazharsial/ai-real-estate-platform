@@ -55,3 +55,7 @@ class SearchResult(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     assumptions: Optional[dict[str, Any]] = None
+
+
+class CompareRequest(BaseModel):
+    ids: list[int]

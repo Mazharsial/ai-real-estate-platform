@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.routers import auth, favorites, health, properties
+from app.api.routers import auth, comparison, deals, favorites, health, market, properties
 from app.core.config import settings
 from app.core.database import init_db
 
@@ -42,6 +42,9 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(properties.router)
     app.include_router(favorites.router)
+    app.include_router(deals.router)
+    app.include_router(comparison.router)
+    app.include_router(market.router)
 
     @app.get("/", tags=["system"])
     def root() -> dict:

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Market Analysis — DealFinder AI{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 fw-bold mb-0">📊 Market Analysis <small class="text-muted fw-normal">— {{ city }}</small></h1>
+  <form class="d-flex gap-2">
+    <input class="form-control form-control-sm" name="city" value="{{ city }}" style="max-width:160px">
+    <button class="btn btn-sm btn-brand">Analyze</button>
+  </form>
+</div>
+
+{% if m %}
+{% set tiles = [('Median price', m.median_price|money, 'teal'),
+                ('Avg price', m.avg_price|money, 'indigo'),
+                ('Avg $/sqft', m.avg_ppsf|money, 'amber'),
+                ('Avg rental yield', m.avg_yield ~ '%', 'teal'),
+                ('Avg days on market', m.avg_days_on_market, 'rose'),
+                ('Avg investment score', m.avg_score ~ '/100', 'indigo'),
+                ('Avg appreciation', m.avg_appreciation ~ '%/yr', 'amber'),
+                ('Listings analyzed', m.count, 'rose')] %}
+<div class="row g-3 mb-4">
+  {% for label, value, tint in tiles %}
+  <div class="col-6 col-md-3">
+    <div class="card stat stat-{{ tint }} h-100"><div class="card-body py-3">
+      <div class="h5 fw-bold mb-0">{{ value }}</div><div class="small text-muted">{{ label }}</div>
+    </div></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card h-100"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">Price distribution</h3>
+      <canvas id="priceChart" height="150"></canvas>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">🔥 Hot neighborhoods (by score)</h3>
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Zip</th><th class="text-end">Avg price</th><th class="text-end">$/sqft</th><th class="text-end">Score</th></tr></thead>
+        <tbody>
+          {% for n in m.hot_neighborhoods %}
+          <tr><td>{{ n.zip }} <span class="text-muted">({{ n.count }})</span></td>
+            <td class="text-end">{{ n.avg_price|money }}</td>
+            <td class="text-end">{{ n.avg_ppsf|money }}</td>
+            <td class="text-end fw-bold">{{ n.avg_score }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-secondary">No market data available.</div>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+{% if m %}
+<script>
+  const dist = {{ m.price_distribution|tojson }};
+  new Chart(document.getElementById('priceChart'), {
+    type:'bar',
+    data:{ labels: dist.map(d=>d.range), datasets:[{ data: dist.map(d=>d.count), backgroundColor:'#0d9488' }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, ticks:{precision:0}} } }
+  });
+</script>
+{% endif %}
+{% endblock %}
