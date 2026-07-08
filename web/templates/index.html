@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="text-center py-4">
+  <h1 class="display-5 fw-bold">Find <span class="text-brand">undervalued</span> investment properties</h1>
+  <p class="text-muted mx-auto" style="max-width:640px">
+    Every listing is scored on price-vs-market, rental yield, schools, safety, appreciation and days on market —
+    so the best deals rise to the top automatically.
+  </p>
+</section>
+
+<form class="card card-body shadow-sm mb-4" method="get">
+  <div class="row g-2 align-items-end">
+    <div class="col-6 col-md">
+      <label class="form-label small text-muted">📍 Location</label>
+      <input class="form-control" name="city" value="{{ criteria.get('city','Dallas') }}">
+    </div>
+    <div class="col-6 col-md">
+      <label class="form-label small text-muted">💵 Max budget</label>
+      <input class="form-control" name="max_price" type="number" step="10000" value="{{ criteria.get('max_price','500000') }}">
+    </div>
+    <div class="col-6 col-md">
+      <label class="form-label small text-muted">🛏️ Min beds</label>
+      <select class="form-select" name="min_beds">
+        {% for b in [0,1,2,3,4,5] %}
+        <option value="{{ b }}" {{ 'selected' if criteria.get('min_beds')==b|string }}>{{ 'Any' if b==0 else b ~ '+' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md">
+      <label class="form-label small text-muted">🏡 Type</label>
+      <select class="form-select" name="property_type">
+        {% for t in ['Any','House','Condo','Townhouse'] %}
+        <option {{ 'selected' if criteria.get('property_type')==t }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-auto">
+      <button class="btn btn-brand w-100"><i class="bi bi-search"></i> Find deals</button>
+    </div>
+  </div>
+</form>
+
+{% if note %}<div class="alert alert-warning py-2 small">ℹ️ {{ note }}</div>{% endif %}
+
+{% if stats %}
+<div class="row g-3 mb-4">
+  {% set tiles = [('Properties analyzed', stats.count, 'data: ' ~ source, 'teal'),
+                  ('Avg investment score', stats.avg_score ~ '/100', '', 'indigo'),
+                  ('Undervalued deals', stats.deals, '≥ 8% below market', 'rose'),
+                  ('Avg price / sqft', '$' ~ stats.avg_ppsf, '', 'amber')] %}
+  {% for label, value, sub, tint in tiles %}
+  <div class="col-6 col-md-3">
+    <div class="card stat stat-{{ tint }} h-100"><div class="card-body">
+      <div class="h3 fw-bold mb-0">{{ value }}</div>
+      <div class="small text-muted">{{ label }}</div>
+      {% if sub %}<div class="text-secondary" style="font-size:.72rem">{{ sub }}</div>{% endif %}
+    </div></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-8">
+    <h2 class="h5 fw-bold mb-3">🏆 Best deals, ranked</h2>
+    <div class="row g-3">
+      {% for p in props %}
+      <div class="col-sm-6">
+        <a href="{{ url_for('detail', pid=p.id) }}" class="card deal-card h-100 text-decoration-none">
+          <div class="deal-img" style="background-image:url('{{ p.image_url }}')">
+            <span class="badge rank">#{{ loop.index }}</span>
+            <span class="badge score score-{{ 'hi' if p.investment_score>=70 else 'mid' if p.investment_score>=55 else 'lo' }}">{{ p.investment_score }}</span>
+            {% if (p.undervalued_pct or 0) >= 8 %}<span class="badge deal-flag">↓ {{ p.undervalued_pct }}% below market</span>{% endif %}
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <div class="h5 fw-bold mb-0">{{ p.price|money }}</div>
+              <div class="small text-muted">{{ p.price_per_sqft|money }}/sqft</div>
+            </div>
+            <div class="text-body-secondary text-truncate">{{ p.address }}</div>
+            <div class="small text-muted">{{ p.city }}, {{ p.state }} {{ p.zip }}</div>
+            <div class="d-flex justify-content-between small mt-2 pt-2 border-top text-muted">
+              <span>💰 {{ p.rental_yield }}%</span><span>🏫 {{ p.school_rating }}/10</span>
+              <span>🛏️ {{ p.beds }} · 🛁 {{ p.baths }} · {{ p.sqft }}sf</span>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% else %}
+      <div class="col-12"><div class="alert alert-secondary">No properties found. Try widening your filters.</div></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-4 mt-4 mt-lg-0">
+    <div class="card"><div class="card-body p-2">
+      <div class="small text-muted px-2 pt-1">🗺️ Deal map · pins colored by score</div>
+      <div id="map" style="height:520px;border-radius:12px"></div>
+    </div></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const props = {{ props|tojson }};
+  const map = L.map('map').setView([32.7767, -96.797], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(map);
+  const color = s => s>=70?'#059669':s>=55?'#0284c7':s>=45?'#d97706':'#e11d48';
+  const pts=[];
+  props.forEach(p => {
+    if(!p.lat || !p.lng) return;
+    pts.push([p.lat,p.lng]);
+    const icon = L.divIcon({className:'',iconSize:[28,28],html:
+      `<div style="background:${color(p.investment_score)};color:#fff;font-weight:700;font-size:11px;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"><span style="transform:rotate(45deg)">${p.investment_score}</span></div>`});
+    L.marker([p.lat,p.lng],{icon}).addTo(map)
+      .bindPopup(`<b>$${(p.price||0).toLocaleString()}</b> · Score ${p.investment_score}<br>${p.address}<br><a href="/property/${p.id}">View details →</a>`);
+  });
+  if(pts.length) map.fitBounds(pts,{padding:[30,30]});
+</script>
+{% endblock %}

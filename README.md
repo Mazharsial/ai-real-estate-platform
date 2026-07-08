@@ -1,0 +1,183 @@
+# 🏢 AI Real Estate Platform
+
+Enterprise **AI Real Estate Deal Analyzer, Property Finder & Investment Advisor** — a
+production-structured platform built in **Python** with **FastAPI** (backend) and
+**Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
+(Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
+
+> **Status: Session 1 — Foundation + vertical slice (complete & tested).**
+> This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
+
+---
+
+## ✅ What works today (Session 1)
+
+- **Auth (Module 1)** — register / login / JWT / roles (admin, investor, agent, guest), password hashing.
+- **Property discovery (Module 2)** — search by city, budget, beds, type; pagination.
+- **Data ingestion (Module 3, adapter)** — RentCast free tier with automatic demo-data fallback (swap-in point).
+- **Analyzer + Financial engine (Modules 5 & 6)** — price/sqft, undervalued %, investment score (0–100),
+  rental yield, mortgage, NOI, **cap rate, cash-on-cash, gross/net yield, closing costs, break-even, cash flow**,
+  3-year appreciation forecast.
+- **AI Investment Advisor (Module 8)** — summary, pros, cons, risks, recommendation, suggested offer
+  (configurable AI provider, with a deterministic rules fallback).
+- **Favorites (Module 11, start)** — save/list/remove (authenticated).
+- **REST API + Swagger** — interactive docs at `/docs`, ReDoc at `/redoc`, OpenAPI JSON at `/openapi.json`.
+- **Flask UI** — dashboard (search, stat tiles, ranked deal cards, Leaflet/OSM map),
+  property detail (financial table, AI advice, Chart.js score breakdown, map), login/register.
+- **Tests** — 15 passing unit + integration tests (pytest).
+- **Docker Compose**, **Alembic** scaffold, **seed script**.
+
+---
+
+## 🧰 Tech stack
+
+| Layer | Tech |
+|---|---|
+| Backend API | Python 3.11+ · FastAPI · SQLAlchemy 2.0 · Pydantic v2 · PyJWT · Passlib |
+| Frontend | Flask · Jinja2 · Bootstrap 5 · Leaflet/OpenStreetMap · Chart.js |
+| Database | PostgreSQL (SQLite supported for quick dev/tests) |
+| Migrations | Alembic |
+| AI | Configurable: Gemini · Ollama · OpenRouter · OpenAI-compatible |
+| Data | RentCast free tier + built-in demo dataset |
+| Infra | Docker · Docker Compose · Gunicorn · Uvicorn |
+
+---
+
+## 🚀 Quickstart
+
+### Option A — Docker (recommended)
+```bash
+cp .env.example .env          # then set GEMINI_API_KEY etc.
+docker compose up --build
+# API   -> http://localhost:8000/docs
+# Web   -> http://localhost:5001
+```
+
+### Option B — Local (Python 3.11+)
+```bash
+python -m venv .venv && . .venv/Scripts/activate   # (Linux/mac: source .venv/bin/activate)
+pip install -r requirements.txt
+cp .env.example .env          # set DATABASE_URL (Postgres) + GEMINI_API_KEY
+
+# terminal 1 — API
+uvicorn app.main:app --reload --port 8000
+
+# terminal 2 — Flask UI
+python -m flask --app web/app.py run --port 5001
+
+# optional — seed an admin user + demo data
+python scripts/seed.py        # admin@platform.local / admin12345
+```
+
+> No API keys? It still runs: the built-in **demo dataset** powers everything, and the AI advisor
+> falls back to a deterministic rules engine when no AI key is set.
+
+---
+
+## 🔌 Configuration (`.env`)
+
+Key settings (see `.env.example` for all):
+
+| Var | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres DSN (or `sqlite:///./dev.db`) |
+| `SECRET_KEY` | JWT signing secret |
+| `AI_PROVIDER` | `gemini` \| `ollama` \| `openrouter` \| `openai` |
+| `GEMINI_API_KEY` | free key from aistudio.google.com |
+| `RENTCAST_API_KEY` | optional free listings API (blank ⇒ demo data) |
+| `API_BASE_URL` | Flask → FastAPI URL |
+
+---
+
+## 🧪 Tests
+```bash
+pytest -q          # 15 tests: analysis math, auth flow, property API, favorites
+```
+Tests use an isolated SQLite DB and disable external AI for determinism.
+
+---
+
+## 🗄️ Database migrations (Alembic)
+```bash
+alembic revision --autogenerate -m "init"
+alembic upgrade head
+```
+(For local dev the app auto-creates tables on startup; production should use migrations.)
+
+---
+
+## 📚 Key API endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Create account → JWT |
+| POST | `/api/auth/login` | Login → JWT |
+| GET | `/api/auth/me` | Current user |
+| POST | `/api/properties/search` | Search + analyze + rank |
+| GET | `/api/properties` | List ranked (pagination) |
+| GET | `/api/properties/{id}` | Property detail |
+| POST | `/api/properties/{id}/analyze` | Full financial analysis |
+| GET | `/api/properties/{id}/advice` | AI investment advice |
+| GET/POST/DELETE | `/api/favorites` | Manage favorites (auth) |
+| GET | `/health` | Service + AI/data status |
+
+Full interactive reference: **`/docs`**.
+
+---
+
+## 🗂️ Project structure
+
+```
+app/                     # FastAPI backend
+  core/                  # config, database, security
+  models/                # SQLAlchemy models (User, Property, Favorite, SavedSearch, AuditLog, ...)
+  schemas/               # Pydantic request/response models
+  services/              # business logic
+    analysis.py          # analyzer + financial engine (Modules 5 & 6)
+    property_service.py   # fetch → analyze → persist → query (repository)
+    data_sources/        # rentcast adapter + demo dataset (Module 3 swap point)
+    ai/                  # configurable provider + investment advisor (Module 8)
+  api/                   # routers + auth dependencies
+  main.py                # app factory
+web/                     # Flask + Jinja2 + Bootstrap frontend
+  app.py, templates/, static/
+alembic/                 # migrations
+scripts/seed.py          # admin + demo data
+tests/                   # pytest suite
+Dockerfile.api · Dockerfile.web · docker-compose.yml
+```
+
+---
+
+## 🧭 Module roadmap
+
+| Module | Status |
+|---|---|
+| 1. User Management (auth, roles, JWT) | ✅ done |
+| 2. Property Discovery (search) | ✅ done |
+| 3. Data ingestion (adapter + demo) | ✅ adapter (scrapers/open-data next) |
+| 5. Property Analyzer | ✅ done |
+| 6. Financial Calculator | ✅ done |
+| 8. AI Investment Advisor | ✅ done |
+| 11. Saved searches / favorites | 🟡 favorites done; saved searches + alerts next |
+| 4. Maps (dashboard + detail) | ✅ basic (nearby search next) |
+| 7. Market Analysis | ⏳ next |
+| 9. Deal Finder (categories) | ⏳ next |
+| 10. Property Comparison | ⏳ next |
+| 12. PDF Investment Reports | ⏳ next |
+| 13. Analytics Dashboard | ⏳ next |
+| 14. Portfolio Manager | ⏳ next |
+| 15. Automation (n8n, daily scan) | ⏳ next |
+| Admin panel · CSV/Excel export · rate limiting · CI/CD | ⏳ next |
+
+---
+
+## 🔒 Security notes
+- Passwords hashed with `pbkdf2_sha256`; JWT bearer auth; role-based guards.
+- Secrets via environment only (`.env` gitignored). Pydantic validation on all inputs.
+- SQLAlchemy ORM (parameterized) prevents SQL injection; Jinja2 autoescaping mitigates XSS.
+- Next: rate limiting, CSRF on Flask forms, audit-log wiring, secure file uploads.
+
+## ⚠️ Disclaimer
+Estimates and AI output are for research/education only — **not financial advice**. Respect all
+data-provider terms of service; the ingestion layer is designed to swap providers cleanly.

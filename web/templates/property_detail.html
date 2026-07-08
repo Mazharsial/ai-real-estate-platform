@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set fin = analysis.financials %}
+{% set sc = analysis.score %}
+{% block title %}{{ p.address }} — DealFinder AI{% endblock %}
+{% block content %}
+
+<a href="{{ url_for('index') }}" class="small text-muted">← Back to deals</a>
+
+<div class="card mt-2 overflow-hidden shadow-sm">
+  <img src="{{ p.image_url }}" style="height:260px;object-fit:cover" alt="">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="display-6 fw-bold">{{ p.price|money }}</div>
+      <div class="text-body-secondary">{{ p.address }}</div>
+      <div class="text-muted small">{{ p.city }}, {{ p.state }} {{ p.zip }} · {{ p.property_type }} · Built {{ p.year_built }}</div>
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        <span class="badge text-bg-light">{{ p.beds }} bd</span>
+        <span class="badge text-bg-light">{{ p.baths }} ba</span>
+        <span class="badge text-bg-light">{{ p.sqft }} sqft</span>
+        {% if (p.undervalued_pct or 0) >= 8 %}<span class="badge text-bg-success">{{ p.undervalued_pct }}% below market</span>{% endif %}
+      </div>
+    </div>
+    <div class="text-center">
+      <div class="score-ring score-{{ 'hi' if p.investment_score>=70 else 'mid' if p.investment_score>=55 else 'lo' }}">{{ p.investment_score }}</div>
+      <div class="small text-muted">Investment score</div>
+      <form method="post" action="{{ url_for('toggle_favorite') }}" class="mt-2">
+        <input type="hidden" name="pid" value="{{ p.id }}">
+        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-heart"></i> Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if advice %}
+<div class="card mt-4 border-0 shadow-sm advice">
+  <div class="card-body">
+    <div class="text-uppercase small fw-semibold text-brand mb-1">🤖 AI investment advisor
+      <span class="badge text-bg-light ms-1">{{ advice.source }}</span></div>
+    <p class="mb-2">{{ advice.summary }}</p>
+    <div class="row g-3">
+      <div class="col-md-4"><b class="text-success">Pros</b><ul class="small mb-0">{% for x in advice.pros %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div class="col-md-4"><b class="text-danger">Cons</b><ul class="small mb-0">{% for x in advice.cons %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div class="col-md-4"><b class="text-warning">Risks</b><ul class="small mb-0">{% for x in advice.risks %}<li>{{ x }}</li>{% endfor %}</ul></div>
+    </div>
+    <div class="mt-3 d-flex flex-wrap gap-4">
+      <div><div class="small text-muted">Recommendation</div><div class="fw-bold">{{ advice.recommendation }}</div></div>
+      <div><div class="small text-muted">Suggested opening offer</div><div class="fw-bold">{{ advice.suggested_offer|money }}</div></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4 mt-1">
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">💵 Financial analysis</h3>
+      <table class="table table-sm mb-0 fin">
+        <tbody>
+          <tr><td>Estimated rent / mo</td><td>{{ fin.monthly_rent|money }}</td></tr>
+          <tr><td>Gross annual rent</td><td>{{ fin.gross_annual_rent|money }}</td></tr>
+          <tr><td>Operating expenses</td><td>{{ fin.operating_expenses|money }}</td></tr>
+          <tr class="fw-semibold"><td>NOI</td><td>{{ fin.noi|money }}</td></tr>
+          <tr><td>Mortgage / mo</td><td>{{ fin.mortgage_monthly|money }}</td></tr>
+          <tr class="fw-semibold {{ 'text-success' if fin.monthly_cash_flow>=0 else 'text-danger' }}">
+            <td>Monthly cash flow</td><td>{{ fin.monthly_cash_flow|money }}</td></tr>
+          <tr><td>Cap rate</td><td>{{ fin.cap_rate }}%</td></tr>
+          <tr><td>Cash-on-cash return</td><td>{{ fin.cash_on_cash }}%</td></tr>
+          <tr><td>Gross / net yield</td><td>{{ fin.gross_yield }}% / {{ fin.net_yield }}%</td></tr>
+          <tr><td>Cash needed (down + closing)</td><td>{{ fin.cash_invested|money }}</td></tr>
+          <tr><td>Break-even occupancy</td><td>{{ fin.break_even_occupancy }}%</td></tr>
+        </tbody>
+      </table>
+      <div class="text-muted mt-2" style="font-size:.72rem">Assumptions: {{ fin.assumptions.down_pct }}% down · {{ fin.assumptions.interest_pct }}% · {{ fin.assumptions.loan_years }}y · {{ fin.assumptions.vacancy_pct }}% vacancy.</div>
+    </div></div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100"><div class="card-body">
+      <h3 class="h6 fw-bold mb-3">🎯 Investment score breakdown</h3>
+      <canvas id="scoreChart" height="180"></canvas>
+      <div class="row text-center mt-3 small">
+        <div class="col"><div class="text-muted">$/sqft</div><b>{{ p.price_per_sqft|money }}</b></div>
+        <div class="col"><div class="text-muted">Area avg</div><b>{{ p.neighborhood_avg_ppsf|money }}</b></div>
+        <div class="col"><div class="text-muted">3-yr est</div><b>{{ p.predicted_value_3yr|money }}</b></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+{% if p.lat and p.lng %}
+<div class="card mt-4"><div class="card-body p-2">
+  <div id="map" style="height:320px;border-radius:12px"></div>
+</div></div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const bd = {{ sc.breakdown|tojson }};
+  new Chart(document.getElementById('scoreChart'), {
+    type:'bar',
+    data:{ labels:['Price↓mkt','Yield','School','Safety','Apprec.','Days'],
+      datasets:[{ data:[bd.price_below_market,bd.rental_yield,bd.school,bd.safety,bd.appreciation,bd.days_on_market],
+        backgroundColor:'#0d9488' }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{max:100,beginAtZero:true} } }
+  });
+  {% if p.lat and p.lng %}
+  const map = L.map('map').setView([{{ p.lat }},{{ p.lng }}], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+  L.marker([{{ p.lat }},{{ p.lng }}]).addTo(map).bindPopup("{{ p.address }}");
+  {% endif %}
+</script>
+{% endblock %}

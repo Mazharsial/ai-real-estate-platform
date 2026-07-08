@@ -1,0 +1,42 @@
+:root {
+  --brand: #0d9488;
+  --brand-deep: #0f766e;
+  --ink: #0f1b2d;
+}
+body { background: #f5f8fd; color: #1e293b; }
+
+.navbar { background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid #e6ecf5; }
+.brand-badge {
+  display:inline-grid; place-items:center; width:34px; height:34px; border-radius:10px;
+  background: linear-gradient(135deg, #14b8a6, #0f766e); color:#fff;
+}
+.text-brand { color: var(--brand) !important; }
+.btn-brand { background: linear-gradient(180deg,#16c3b6,#0f766e); color:#fff; border:none; font-weight:600; }
+.btn-brand:hover { filter: brightness(1.06); color:#fff; }
+
+.card { border:1px solid #e6ecf5; border-radius:16px; }
+
+/* Stat tiles */
+.stat { border:1px solid #e6ecf5; }
+.stat-teal   { background: linear-gradient(135deg,#ecfdf5,#fff); }
+.stat-indigo { background: linear-gradient(135deg,#eef2ff,#fff); }
+.stat-rose   { background: linear-gradient(135deg,#fff1f2,#fff); }
+.stat-amber  { background: linear-gradient(135deg,#fffbeb,#fff); }
+
+/* Deal cards */
+.deal-card { color: inherit; transition: transform .2s, box-shadow .2s; overflow:hidden; }
+.deal-card:hover { transform: translateY(-5px); box-shadow: 0 24px 40px -28px rgba(13,148,136,.5); }
+.deal-img { height:170px; background-size:cover; background-position:center; position:relative; }
+.deal-img .badge { position:absolute; }
+.deal-img .rank { top:10px; left:10px; background:rgba(0,0,0,.55); }
+.deal-img .score { top:10px; right:10px; width:36px; height:36px; border-radius:50%; display:grid; place-items:center; font-size:.9rem; }
+.deal-img .deal-flag { bottom:10px; left:10px; background: var(--brand); }
+.score-hi { background:#059669 !important; } .score-mid { background:#0284c7 !important; } .score-lo { background:#d97706 !important; }
+
+.score-ring {
+  width:76px; height:76px; border-radius:50%; display:grid; place-items:center;
+  font-size:1.6rem; font-weight:800; color:#fff; margin:0 auto;
+}
+.advice { background: linear-gradient(135deg,#eef2ff,#fff); }
+.fin td:last-child { text-align:right; font-variant-numeric: tabular-nums; }
+.leaflet-container { border-radius:12px; }
