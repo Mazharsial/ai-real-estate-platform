@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models.property import Property
 from app.services.analysis import analyze_properties, full_financials, investment_score, score_reasons
-from app.services.data_sources.rentcast import fetch_properties
+from app.services.data_sources import fetch_properties
 
 # Columns we persist from an analyzed dict
 _PERSIST_COLS = [

@@ -1,6 +1,7 @@
-"""Property data adapter — RentCast free tier with automatic demo fallback.
+"""Property data adapter — RentCast free tier (one of several swappable providers).
 
-The ONE place to swap in another data provider later (Module 3 extension point).
+Real-data provider for US for-sale listings. Returns a normalized list; raises on
+failure so the source dispatcher (data_sources/__init__.py) can fall back cleanly.
 """
 from __future__ import annotations
 
@@ -8,7 +9,6 @@ import httpx
 
 from app.core.config import settings
 from app.services.analysis import heuristic_monthly_rent
-from app.services.data_sources.seed_data import filter_seed
 
 DEFAULT_IMG = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60"
 
@@ -62,45 +62,36 @@ def _normalize(item: dict) -> dict:
     }
 
 
-def fetch_properties(criteria: dict | None = None) -> dict:
-    """Return {source, properties, note?}. Never raises — always yields data."""
+def fetch_rentcast(criteria: dict | None = None) -> list[dict]:
+    """Fetch normalized for-sale listings from RentCast. [] if no key; raises on error."""
     criteria = criteria or {}
+    key = settings.RENTCAST_API_KEY
+    if not key:
+        return []
+
     city = criteria.get("city") or settings.DEFAULT_CITY
     state = criteria.get("state") or settings.DEFAULT_STATE
-    key = settings.RENTCAST_API_KEY
+    params = {"city": city, "state": state, "status": "Active", "limit": 30}
+    if criteria.get("max_price"):
+        params["maxPrice"] = int(criteria["max_price"])
+    if criteria.get("min_beds"):
+        params["bedrooms"] = int(criteria["min_beds"])
+    if criteria.get("property_type") and criteria["property_type"] != "Any":
+        params["propertyType"] = criteria["property_type"]
 
-    if not key:
-        return {"source": "demo", "properties": filter_seed(**{**criteria, "city": city})}
+    resp = httpx.get(
+        "https://api.rentcast.io/v1/listings/sale",
+        params=params,
+        headers={"X-Api-Key": key, "Accept": "application/json"},
+        timeout=20,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    listings = data if isinstance(data, list) else data.get("listings", [])
+    props = [_normalize(x) for x in listings if (x.get("price") or 0) > 0]
 
-    try:
-        params = {"city": city, "state": state, "status": "Active", "limit": 30}
-        if criteria.get("max_price"):
-            params["maxPrice"] = int(criteria["max_price"])
-        if criteria.get("min_beds"):
-            params["bedrooms"] = int(criteria["min_beds"])
-        if criteria.get("property_type") and criteria["property_type"] != "Any":
-            params["propertyType"] = criteria["property_type"]
-
-        resp = httpx.get(
-            "https://api.rentcast.io/v1/listings/sale",
-            params=params,
-            headers={"X-Api-Key": key, "Accept": "application/json"},
-            timeout=20,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        listings = data if isinstance(data, list) else data.get("listings", [])
-        props = [_normalize(x) for x in listings if (x.get("price") or 0) > 0]
-
-        if criteria.get("max_price"):
-            props = [p for p in props if p["price"] <= float(criteria["max_price"])]
-        if criteria.get("min_beds"):
-            props = [p for p in props if p["beds"] >= int(criteria["min_beds"])]
-
-        if not props:
-            return {"source": "demo", "note": "RentCast returned no matches — showing demo data",
-                    "properties": filter_seed(**{**criteria, "city": city})}
-        return {"source": "rentcast", "properties": props}
-    except Exception as exc:  # noqa: BLE001 — graceful fallback is intentional
-        return {"source": "demo", "note": f"RentCast unavailable ({exc}) — showing demo data",
-                "properties": filter_seed(**{**criteria, "city": city})}
+    if criteria.get("max_price"):
+        props = [p for p in props if p["price"] <= float(criteria["max_price"])]
+    if criteria.get("min_beds"):
+        props = [p for p in props if p["beds"] >= int(criteria["min_beds"])]
+    return props

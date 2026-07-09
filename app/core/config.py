@@ -33,7 +33,15 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
 
     # Property data
+    # DATA_SOURCE: auto | rentcast | opendata | demo. "auto" uses rentcast if a key is set,
+    # else opendata if OPENDATA_URL is set, else the built-in demo dataset.
+    DATA_SOURCE: str = "auto"
     RENTCAST_API_KEY: str = ""
+    # Legal, free, no-key public open-data (e.g. a Socrata property dataset resource URL).
+    OPENDATA_URL: str = ""
+    OPENDATA_APP_TOKEN: str = ""        # optional Socrata app token (free; raises rate limits)
+    OPENDATA_SOURCE_LABEL: str = "opendata"
+    OPENDATA_FIELD_MAP: str = ""        # optional JSON to override field-name mapping
     DEFAULT_CITY: str = "Dallas"
     DEFAULT_STATE: str = "TX"
 

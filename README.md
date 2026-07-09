@@ -5,17 +5,19 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 **Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
 (Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
 
-> **Status: Session 9 — all 15 modules + admin/export/CI + AI Chatbot, NL search, nearby maps, password reset, email alerts & CSRF/upload hardening (complete & tested, 55 passing tests).**
+> **Status: Session 10 — all 15 modules + admin/export/CI + AI Chatbot, NL search, nearby maps, password reset, email alerts, CSRF hardening & legal open-data ingestion (complete & tested, 60 passing tests).**
 > This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
 
 ---
 
-## ✅ What works today (Session 1)
+## ✅ What works today (Sessions 1–10)
 
 - **Auth (Module 1)** — register / login / JWT / roles (admin, investor, agent, guest), password hashing,
   **password reset** (email a time-limited, single-use reset link; token bound to the current password hash).
 - **Property discovery (Module 2)** — search by city, budget, beds, type; pagination.
-- **Data ingestion (Module 3, adapter)** — RentCast free tier with automatic demo-data fallback (swap-in point).
+- **Data ingestion (Module 3)** — pluggable source dispatcher: **RentCast** free tier (real listings) **or**
+  a **legal, no-key public open-data** adapter (Socrata property datasets — ToS-friendly, not scraping) **or**
+  the built-in demo dataset. Chosen via `DATA_SOURCE`, with automatic graceful fallback to demo.
 - **Analyzer + Financial engine (Modules 5 & 6)** — price/sqft, undervalued %, investment score (0–100),
   rental yield, mortgage, NOI, **cap rate, cash-on-cash, gross/net yield, closing costs, break-even, cash flow**,
   3-year appreciation forecast.
@@ -37,7 +39,7 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
   no key; multi-mirror fallback, graceful when offline). Endpoint: `GET /api/properties/{id}/nearby`.
 - **Security** — CSRF protection on all Flask forms (session token, constant-time compare); secure CSV
   upload (extension + content-type + 5 MB size cap).
-- **Tests** — 55 passing unit + integration tests (pytest).
+- **Tests** — 60 passing unit + integration tests (pytest).
 - **Docker Compose**, **Alembic** scaffold, **seed script**.
 
 ---
@@ -51,7 +53,7 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 | Database | PostgreSQL (SQLite supported for quick dev/tests) |
 | Migrations | Alembic |
 | AI | Configurable: Gemini · Ollama · OpenRouter · OpenAI-compatible |
-| Data | RentCast free tier + built-in demo dataset |
+| Data | RentCast free tier · legal no-key open data (Socrata) · built-in demo dataset |
 | Infra | Docker · Docker Compose · Gunicorn · Uvicorn |
 
 ---
@@ -97,14 +99,16 @@ Key settings (see `.env.example` for all):
 | `SECRET_KEY` | JWT signing secret |
 | `AI_PROVIDER` | `gemini` \| `ollama` \| `openrouter` \| `openai` |
 | `GEMINI_API_KEY` | free key from aistudio.google.com |
-| `RENTCAST_API_KEY` | optional free listings API (blank ⇒ demo data) |
+| `DATA_SOURCE` | `auto` \| `rentcast` \| `opendata` \| `demo` |
+| `RENTCAST_API_KEY` | optional free listings API (real US listings) |
+| `OPENDATA_URL` | optional legal no-key public open-data (Socrata) resource URL |
 | `API_BASE_URL` | Flask → FastAPI URL |
 
 ---
 
 ## 🧪 Tests
 ```bash
-pytest -q          # 15 tests: analysis math, auth flow, property API, favorites
+pytest -q          # 60 tests: analysis math, auth + reset, property API, AI search, nearby, security, data sources
 ```
 Tests use an isolated SQLite DB and disable external AI for determinism.
 
@@ -171,7 +175,7 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 |---|---|
 | 1. User Management (auth, roles, JWT) | ✅ done |
 | 2. Property Discovery (search) | ✅ done |
-| 3. Data ingestion (adapter + demo) | ✅ adapter (scrapers/open-data next) |
+| 3. Data ingestion (RentCast + legal open-data + demo) | ✅ done |
 | 5. Property Analyzer | ✅ done |
 | 6. Financial Calculator | ✅ done |
 | 8. AI Investment Advisor | ✅ done |
