@@ -28,6 +28,7 @@
         <td class="text-muted">{{ u.full_name }}</td>
         <td>
           <form method="post" action="{{ url_for('admin_user', uid=u.id) }}" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <select class="form-select form-select-sm" name="role" style="max-width:130px">
               {% for r in ['admin','investor','agent','guest'] %}<option {{ 'selected' if u.role==r }}>{{ r }}</option>{% endfor %}
             </select>

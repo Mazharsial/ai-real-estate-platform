@@ -6,6 +6,7 @@
     <div class="card shadow-sm"><div class="card-body p-4">
       <h1 class="h4 fw-bold mb-3">Create your account</h1>
       <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="mb-3">
           <label class="form-label">Full name</label>
           <input class="form-control" name="full_name" placeholder="Jane Investor">

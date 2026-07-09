@@ -16,14 +16,23 @@ router = APIRouter(prefix="/api/import", tags=["import"], dependencies=[Depends(
 
 _NUMERIC = {"price", "beds", "baths", "sqft", "lot_size", "year_built", "days_on_market",
             "hoa", "taxes", "school_rating", "crime_score", "appreciation_trend", "rent_estimate"}
+_MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB cap — reject oversized uploads
 
 
 @router.post("/properties")
 async def import_properties(file: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     if not (file.filename or "").lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Please upload a .csv file")
+    if file.content_type and file.content_type not in (
+        "text/csv", "application/vnd.ms-excel", "application/csv", "text/plain",
+        "application/octet-stream",
+    ):
+        raise HTTPException(status_code=400, detail="Unexpected file type — expected CSV")
 
-    content = (await file.read()).decode("utf-8", errors="ignore")
+    raw_bytes = await file.read()
+    if len(raw_bytes) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 5 MB)")
+    content = raw_bytes.decode("utf-8", errors="ignore")
     reader = csv.DictReader(io.StringIO(content))
 
     raw: list[dict] = []

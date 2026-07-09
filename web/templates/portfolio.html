@@ -33,6 +33,7 @@
             <td class="text-end">{{ h.roi }}%</td>
             <td class="text-end {{ 'text-success' if h.appreciation>=0 else 'text-danger' }}">{{ h.appreciation_pct }}%</td>
             <td class="text-end"><form method="post" action="{{ url_for('portfolio_delete', hid=h.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button class="btn btn-sm btn-outline-danger">✕</button></form></td>
           </tr>
           {% endfor %}
@@ -54,6 +55,7 @@
 <div class="card mt-4"><div class="card-body">
   <h3 class="h6 fw-bold mb-3">➕ Add a property</h3>
   <form method="post" action="{{ url_for('portfolio_add') }}" class="row g-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="col-md-4"><input class="form-control form-control-sm" name="address" placeholder="Address" required></div>
     <div class="col-md-2"><input class="form-control form-control-sm" name="city" placeholder="City"></div>
     <div class="col-md-2">

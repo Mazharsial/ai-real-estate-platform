@@ -24,6 +24,7 @@
       <div class="score-ring score-{{ 'hi' if p.investment_score>=70 else 'mid' if p.investment_score>=55 else 'lo' }}">{{ p.investment_score }}</div>
       <div class="small text-muted">Investment score</div>
       <form method="post" action="{{ url_for('toggle_favorite') }}" class="mt-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="pid" value="{{ p.id }}">
         <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-heart"></i> Save</button>
       </form>

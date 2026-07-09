@@ -5,7 +5,7 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 **Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
 (Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
 
-> **Status: Session 8 — all 15 modules + admin/export/CI + AI Chatbot, NL search, nearby-amenity maps, password reset & email alerts (complete & tested, 49 passing tests).**
+> **Status: Session 9 — all 15 modules + admin/export/CI + AI Chatbot, NL search, nearby maps, password reset, email alerts & CSRF/upload hardening (complete & tested, 55 passing tests).**
 > This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
 
 ---
@@ -35,7 +35,9 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 - **Nearby search (Module 4)** — each property detail page maps nearby schools, hospitals, restaurants,
   groceries, banks, parks, gyms & transit with straight-line distances, via **OpenStreetMap Overpass** (free,
   no key; multi-mirror fallback, graceful when offline). Endpoint: `GET /api/properties/{id}/nearby`.
-- **Tests** — 44 passing unit + integration tests (pytest).
+- **Security** — CSRF protection on all Flask forms (session token, constant-time compare); secure CSV
+  upload (extension + content-type + 5 MB size cap).
+- **Tests** — 55 passing unit + integration tests (pytest).
 - **Docker Compose**, **Alembic** scaffold, **seed script**.
 
 ---
@@ -186,7 +188,7 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | Admin panel (users, roles, stats) | ✅ done |
 | CSV / Excel / JSON export | ✅ done |
 | 15. Automation (n8n daily scan + alerts) | ✅ done |
-| Security: rate limiting, headers, audit log | ✅ done (CSRF tokens next) |
+| Security: rate limiting, headers, audit log, CSRF, secure uploads | ✅ done |
 | CI/CD (GitHub Actions) · CSV import | ✅ done |
 
 ---
@@ -197,7 +199,8 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 - **Audit logging** of auth events; admin-only endpoints for user management.
 - Secrets via environment only (`.env` gitignored). Pydantic validation on all inputs.
 - SQLAlchemy ORM (parameterized) prevents SQL injection; Jinja2 autoescaping mitigates XSS.
-- Next: CSRF tokens on Flask forms, secure file-upload scanning.
+- **CSRF protection** on every Flask form (per-session token, constant-time compare via `hmac`).
+- **Secure uploads** — CSV import validates extension + content-type and caps size at 5 MB.
 
 ## ⚠️ Disclaimer
 Estimates and AI output are for research/education only — **not financial advice**. Respect all

@@ -1,10 +1,12 @@
 """Flask + Jinja2 frontend. Consumes the FastAPI backend over HTTP."""
 from __future__ import annotations
 
+import hmac
 import os
+import secrets
 
 import httpx
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, session, url_for
 
 API = os.environ.get("API_BASE_URL", "http://localhost:8000")
 TIMEOUT = 45
@@ -23,9 +25,20 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 
+    @app.before_request
+    def _csrf_protect():
+        """Reject state-changing requests without a valid session CSRF token."""
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            sent = request.form.get("csrf_token") or request.headers.get("X-CSRFToken", "")
+            if not sent or not hmac.compare_digest(str(sent), session.get("csrf_token", "")):
+                abort(400, description="CSRF token missing or invalid. Please reload and try again.")
+
     @app.context_processor
     def inject_globals():
-        return {"current_user": session.get("user"), "api_base": API}
+        if not session.get("csrf_token"):
+            session["csrf_token"] = secrets.token_urlsafe(32)
+        return {"current_user": session.get("user"), "api_base": API,
+                "csrf_token": session["csrf_token"]}
 
     @app.template_filter("money")
     def money(v):

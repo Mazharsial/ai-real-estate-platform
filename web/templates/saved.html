@@ -18,6 +18,7 @@
       <div class="d-flex flex-column gap-1">
         <a class="btn btn-sm btn-brand" href="{{ url_for('index', **s.filters) }}">Run</a>
         <form method="post" action="{{ url_for('delete_saved', sid=s.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="btn btn-sm btn-outline-danger w-100">Delete</button>
         </form>
       </div>
