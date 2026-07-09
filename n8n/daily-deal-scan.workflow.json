@@ -1,0 +1,82 @@
+{
+  "name": "AI Real Estate — Daily Deal Scan",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 8 * * *" }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every day at 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/monitor/scan",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "city", "value": "Dallas" },
+            { "name": "min_under", "value": "12" },
+            { "name": "min_score", "value": "70" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "http-scan",
+      "name": "Run deal scan (API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.new_deals }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "if-new-deals",
+      "name": "New deals found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "content": "The API already emails each user whose alert-enabled saved search matches (see monitor.notify_subscribers). This branch is where you'd ALSO push to Slack / Telegram / a webhook, or write the day's deals to a Google Sheet. `{{ $json.deals }}` holds the fresh deals; `{{ $json.email_text }}` is a ready-to-send digest.",
+        "height": 220,
+        "width": 360
+      },
+      "id": "note-notify",
+      "name": "Optional: extra notifications",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [920, 180]
+    }
+  ],
+  "connections": {
+    "Every day at 8am": {
+      "main": [[{ "node": "Run deal scan (API)", "type": "main", "index": 0 }]]
+    },
+    "Run deal scan (API)": {
+      "main": [[{ "node": "New deals found?", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "description": "Calls the platform's /api/monitor/scan endpoint once a day. The API finds new undervalued/high-score deals, records alerts, and emails subscribers whose saved searches match. Import this file into n8n (Workflows -> Import from File), point the URL at your API host, and activate."
+  }
+}
