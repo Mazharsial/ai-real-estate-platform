@@ -5,7 +5,7 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 **Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
 (Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
 
-> **Status: Session 6 — all 15 modules + admin/export/CI + AI Chatbot & NL search (complete & tested, 39 passing tests).**
+> **Status: Session 7 — all 15 modules + admin/export/CI + AI Chatbot, NL search & nearby-amenity maps (complete & tested, 44 passing tests).**
 > This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
 
 ---
@@ -29,7 +29,10 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 - **REST API + Swagger** — interactive docs at `/docs`, ReDoc at `/redoc`, OpenAPI JSON at `/openapi.json`.
 - **Flask UI** — dashboard (search, stat tiles, ranked deal cards, Leaflet/OSM map),
   property detail (financial table, AI advice, Chart.js score breakdown, map), login/register.
-- **Tests** — 39 passing unit + integration tests (pytest).
+- **Nearby search (Module 4)** — each property detail page maps nearby schools, hospitals, restaurants,
+  groceries, banks, parks, gyms & transit with straight-line distances, via **OpenStreetMap Overpass** (free,
+  no key; multi-mirror fallback, graceful when offline). Endpoint: `GET /api/properties/{id}/nearby`.
+- **Tests** — 44 passing unit + integration tests (pytest).
 - **Docker Compose**, **Alembic** scaffold, **seed script**.
 
 ---
@@ -125,6 +128,7 @@ alembic upgrade head
 | GET | `/api/properties/{id}/advice` | AI investment advice |
 | POST | `/api/assistant/search` | Natural-language search → filtered, ranked properties |
 | POST | `/api/assistant/chat` | Ask the AI chatbot → grounded answer + relevant listings |
+| GET | `/api/properties/{id}/nearby` | Nearby amenities (schools/hospitals/transit/…) via OpenStreetMap |
 | GET/POST/DELETE | `/api/favorites` | Manage favorites (auth) |
 | GET | `/health` | Service + AI/data status |
 
@@ -168,7 +172,7 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 8. AI Investment Advisor | ✅ done |
 | AI Chatbot + Natural-Language / semantic search | ✅ done |
 | 11. Saved searches / favorites | ✅ favorites + saved searches (email alerts next) |
-| 4. Maps (dashboard + detail) | ✅ basic (nearby search next) |
+| 4. Maps (dashboard + detail + nearby amenities) | ✅ done |
 | 7. Market Analysis | ✅ done |
 | 9. Deal Finder (categories) | ✅ done |
 | 10. Property Comparison | ✅ done |

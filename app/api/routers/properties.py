@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.property import AnalyzeRequest, PropertyOut, SearchCriteria, SearchResult
 from app.services.ai.advisor import investment_advice
+from app.services.geo import nearby_amenities
 from app.services.reports import build_property_report
 from app.services.property_service import (
     analyze_one,
@@ -66,6 +67,15 @@ def advice(property_id: int, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(status_code=404, detail="Property not found")
     bundle = analyze_one(p)
     return {"property_id": property_id, "advice": investment_advice(bundle["property"], bundle["financials"])}
+
+
+@router.get("/{property_id}/nearby")
+def nearby(property_id: int, radius: int = Query(1500, ge=200, le=5000),
+           db: Session = Depends(get_db)) -> dict:
+    p = get_property(db, property_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return nearby_amenities(p.lat, p.lng, radius_m=radius)
 
 
 @router.get("/{property_id}/report")

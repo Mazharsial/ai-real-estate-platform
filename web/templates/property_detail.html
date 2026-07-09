@@ -93,6 +93,13 @@
 <div class="card mt-4"><div class="card-body p-2">
   <div id="map" style="height:320px;border-radius:12px"></div>
 </div></div>
+
+<div class="card mt-4"><div class="card-body">
+  <h3 class="h6 fw-bold mb-3">📍 What's nearby <span class="text-muted small fw-normal">· within ~1.5&nbsp;km, via OpenStreetMap</span></h3>
+  <div id="nearbyBox" class="row g-2">
+    <div class="col-12 text-muted small"><span class="spinner-border spinner-border-sm me-1"></span> Finding nearby schools, transit, shops…</div>
+  </div>
+</div></div>
 {% endif %}
 
 {% endblock %}
@@ -110,7 +117,34 @@
   {% if p.lat and p.lng %}
   const map = L.map('map').setView([{{ p.lat }},{{ p.lng }}], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-  L.marker([{{ p.lat }},{{ p.lng }}]).addTo(map).bindPopup("{{ p.address }}");
+  L.marker([{{ p.lat }},{{ p.lng }}]).addTo(map).bindPopup("<b>{{ p.address }}</b>").openPopup();
+
+  // Module 4 — nearby amenities (schools/hospitals/transit/…) from the API
+  fetch("{{ api_base }}/api/properties/{{ p.id }}/nearby")
+    .then(r => r.json())
+    .then(d => {
+      const box = document.getElementById('nearbyBox');
+      if (!d.categories || !d.categories.length) {
+        box.innerHTML = '<div class="col-12 text-muted small">No nearby places found (or the map service is busy — try again shortly).</div>';
+        return;
+      }
+      let html = '';
+      d.categories.forEach(c => {
+        c.items.forEach(it => {
+          L.circleMarker([it.lat, it.lng], {radius:5, color:'#6366f1', fillColor:'#818cf8', fillOpacity:.85, weight:1})
+            .addTo(map).bindPopup(`${c.icon} <b>${it.name}</b><br>${Math.round(it.distance_m)} m away`);
+        });
+        html += `<div class="col-6 col-md-4"><div class="fw-semibold small mb-1">${c.icon} ${c.label} <span class="text-muted">(${c.count})</span></div><ul class="list-unstyled small mb-2">`;
+        c.items.slice(0,4).forEach(it => {
+          html += `<li class="text-truncate">${it.name} <span class="text-muted">· ${Math.round(it.distance_m)}m</span></li>`;
+        });
+        html += '</ul></div>';
+      });
+      box.innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('nearbyBox').innerHTML = '<div class="col-12 text-muted small">Nearby data unavailable right now.</div>';
+    });
   {% endif %}
 </script>
 {% endblock %}
