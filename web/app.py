@@ -114,6 +114,38 @@ def create_app() -> Flask:
                 flash(f"API error: {exc}", "danger")
         return render_template("register.html")
 
+    @app.route("/forgot-password", methods=["GET", "POST"])
+    def forgot_password():
+        dev_link = None
+        if request.method == "POST":
+            try:
+                r = _api("POST", "/api/auth/forgot-password", json={"email": request.form["email"]})
+                body = r.json() if r.status_code == 200 else {}
+                dev_link = body.get("reset_link")  # only present when no mail server configured
+                flash(body.get("message", "If that email is registered, a reset link has been sent."),
+                      "info")
+            except Exception as exc:  # noqa: BLE001
+                flash(f"API error: {exc}", "danger")
+        return render_template("forgot_password.html", dev_link=dev_link)
+
+    @app.route("/reset-password", methods=["GET", "POST"])
+    def reset_password():
+        token = request.values.get("token", "")
+        if request.method == "POST":
+            try:
+                r = _api("POST", "/api/auth/reset-password",
+                         json={"token": token, "new_password": request.form["new_password"]})
+                if r.status_code == 200:
+                    body = r.json()
+                    session["token"] = body["access_token"]
+                    session["user"] = body["user"]
+                    flash("Password updated — you're signed in.", "success")
+                    return redirect(url_for("index"))
+                flash(r.json().get("detail", "Could not reset password."), "danger")
+            except Exception as exc:  # noqa: BLE001
+                flash(f"API error: {exc}", "danger")
+        return render_template("reset_password.html", token=token)
+
     @app.route("/logout")
     def logout():
         session.clear()

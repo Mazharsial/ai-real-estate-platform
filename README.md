@@ -5,14 +5,15 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 **Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
 (Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
 
-> **Status: Session 7 — all 15 modules + admin/export/CI + AI Chatbot, NL search & nearby-amenity maps (complete & tested, 44 passing tests).**
+> **Status: Session 8 — all 15 modules + admin/export/CI + AI Chatbot, NL search, nearby-amenity maps, password reset & email alerts (complete & tested, 49 passing tests).**
 > This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
 
 ---
 
 ## ✅ What works today (Session 1)
 
-- **Auth (Module 1)** — register / login / JWT / roles (admin, investor, agent, guest), password hashing.
+- **Auth (Module 1)** — register / login / JWT / roles (admin, investor, agent, guest), password hashing,
+  **password reset** (email a time-limited, single-use reset link; token bound to the current password hash).
 - **Property discovery (Module 2)** — search by city, budget, beds, type; pagination.
 - **Data ingestion (Module 3, adapter)** — RentCast free tier with automatic demo-data fallback (swap-in point).
 - **Analyzer + Financial engine (Modules 5 & 6)** — price/sqft, undervalued %, investment score (0–100),
@@ -25,7 +26,9 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
   into structured filters, retrieves the matching properties, and the AI answers grounded on that real data
   (works fully offline via rules fallback). Endpoints: `POST /api/assistant/search`, `POST /api/assistant/chat`;
   UI at `/assistant`.
-- **Favorites (Module 11, start)** — save/list/remove (authenticated).
+- **Favorites & saved searches (Module 11)** — save/list/remove; **email alerts** — the daily scan emails
+  each user whose alert-enabled saved search matches new deals (free via Gmail SMTP; skipped cleanly when
+  SMTP isn't set).
 - **REST API + Swagger** — interactive docs at `/docs`, ReDoc at `/redoc`, OpenAPI JSON at `/openapi.json`.
 - **Flask UI** — dashboard (search, stat tiles, ranked deal cards, Leaflet/OSM map),
   property detail (financial table, AI advice, Chart.js score breakdown, map), login/register.
@@ -171,7 +174,8 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 6. Financial Calculator | ✅ done |
 | 8. AI Investment Advisor | ✅ done |
 | AI Chatbot + Natural-Language / semantic search | ✅ done |
-| 11. Saved searches / favorites | ✅ favorites + saved searches (email alerts next) |
+| 11. Saved searches / favorites + email alerts | ✅ done |
+| Password reset (email link) | ✅ done |
 | 4. Maps (dashboard + detail + nearby amenities) | ✅ done |
 | 7. Market Analysis | ✅ done |
 | 9. Deal Finder (categories) | ✅ done |

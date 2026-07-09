@@ -35,3 +35,28 @@ def create_access_token(subject: str | int, extra: Optional[dict[str, Any]] = No
 
 def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+
+
+def create_reset_token(user_id: int | str, hashed_password: str) -> str:
+    """Short-lived password-reset token, bound to the current password hash.
+
+    Embedding a fingerprint of the current hash makes the token single-use in
+    practice: once the password changes, the fingerprint no longer matches.
+    """
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(user_id),
+        "type": "reset",
+        "pw": hashed_password[-12:],  # fingerprint of the current password hash
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)).timestamp()),
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_reset_token(token: str) -> dict[str, Any]:
+    """Decode + validate a reset token. Raises jwt exceptions if invalid/expired."""
+    data = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    if data.get("type") != "reset":
+        raise jwt.InvalidTokenError("not a reset token")
+    return data

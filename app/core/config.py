@@ -39,6 +39,24 @@ class Settings(BaseSettings):
 
     # Security
     RATE_LIMIT_PER_MINUTE: int = 120
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+
+    # Email / SMTP — free via a Gmail App Password. Blank => emails are skipped gracefully.
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    MAIL_FROM: str = ""             # defaults to SMTP_USER when blank
+    MAIL_FROM_NAME: str = "AI Real Estate Platform"
+    APP_BASE_URL: str = "http://localhost:5001"   # used for links inside emails (Flask UI)
+
+    @property
+    def mail_from_addr(self) -> str:
+        return self.MAIL_FROM or self.SMTP_USER
+
+    @property
+    def mail_configured(self) -> bool:
+        return bool(self.SMTP_HOST and self.SMTP_USER and self.SMTP_PASSWORD)
 
     # CORS (comma separated)
     CORS_ORIGINS: str = "http://localhost:5001,http://127.0.0.1:5001"
