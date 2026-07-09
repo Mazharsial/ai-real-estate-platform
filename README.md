@@ -5,7 +5,7 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
 **Flask + Jinja2 + Bootstrap 5** (frontend), **PostgreSQL**, and a **configurable AI provider**
 (Gemini / Ollama / OpenRouter / OpenAI). Uses only free/open resources.
 
-> **Status: Session 1 — Foundation + vertical slice (complete & tested).**
+> **Status: Session 6 — all 15 modules + admin/export/CI + AI Chatbot & NL search (complete & tested, 39 passing tests).**
 > This is being built module-by-module. See the [roadmap](#-module-roadmap) for what's done and next.
 
 ---
@@ -20,11 +20,16 @@ production-structured platform built in **Python** with **FastAPI** (backend) an
   3-year appreciation forecast.
 - **AI Investment Advisor (Module 8)** — summary, pros, cons, risks, recommendation, suggested offer
   (configurable AI provider, with a deterministic rules fallback).
+- **AI Chatbot + Natural-Language Search** — ask in plain English ("3-bedroom houses under $150k with high
+  rental yield", "which city has the highest rental yield?"). A deterministic NL parser turns the question
+  into structured filters, retrieves the matching properties, and the AI answers grounded on that real data
+  (works fully offline via rules fallback). Endpoints: `POST /api/assistant/search`, `POST /api/assistant/chat`;
+  UI at `/assistant`.
 - **Favorites (Module 11, start)** — save/list/remove (authenticated).
 - **REST API + Swagger** — interactive docs at `/docs`, ReDoc at `/redoc`, OpenAPI JSON at `/openapi.json`.
 - **Flask UI** — dashboard (search, stat tiles, ranked deal cards, Leaflet/OSM map),
   property detail (financial table, AI advice, Chart.js score breakdown, map), login/register.
-- **Tests** — 15 passing unit + integration tests (pytest).
+- **Tests** — 39 passing unit + integration tests (pytest).
 - **Docker Compose**, **Alembic** scaffold, **seed script**.
 
 ---
@@ -118,6 +123,8 @@ alembic upgrade head
 | GET | `/api/properties/{id}` | Property detail |
 | POST | `/api/properties/{id}/analyze` | Full financial analysis |
 | GET | `/api/properties/{id}/advice` | AI investment advice |
+| POST | `/api/assistant/search` | Natural-language search → filtered, ranked properties |
+| POST | `/api/assistant/chat` | Ask the AI chatbot → grounded answer + relevant listings |
 | GET/POST/DELETE | `/api/favorites` | Manage favorites (auth) |
 | GET | `/health` | Service + AI/data status |
 
@@ -159,6 +166,7 @@ Dockerfile.api · Dockerfile.web · docker-compose.yml
 | 5. Property Analyzer | ✅ done |
 | 6. Financial Calculator | ✅ done |
 | 8. AI Investment Advisor | ✅ done |
+| AI Chatbot + Natural-Language / semantic search | ✅ done |
 | 11. Saved searches / favorites | ✅ favorites + saved searches (email alerts next) |
 | 4. Maps (dashboard + detail) | ✅ basic (nearby search next) |
 | 7. Market Analysis | ✅ done |

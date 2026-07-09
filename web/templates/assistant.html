@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant · DealFinder{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="fs-3">🤖</span>
+      <h4 class="mb-0">AI Investment Assistant</h4>
+    </div>
+    <p class="text-muted">
+      Ask in plain English — the assistant searches your live property data and answers.
+      {% if source == 'rules' %}<span class="badge bg-secondary">offline mode</span>{% endif %}
+    </p>
+
+    <form method="get" class="card p-3 mb-3 shadow-sm">
+      <div class="input-group input-group-lg">
+        <input type="text" name="q" class="form-control" autofocus
+               placeholder="e.g. 3-bedroom houses under $150k with high rental yield"
+               value="{{ q or '' }}">
+        <button class="btn btn-brand" type="submit"><i class="bi bi-send"></i> Ask</button>
+      </div>
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        {% for ex in examples %}
+          <a href="{{ url_for('assistant') }}?q={{ ex|urlencode }}"
+             class="badge rounded-pill text-bg-light border text-decoration-none">{{ ex }}</a>
+        {% endfor %}
+      </div>
+    </form>
+
+    {% if answer %}
+      <div class="card shadow-sm mb-3 border-brand">
+        <div class="card-body">
+          <div class="d-flex gap-2">
+            <span class="fs-4">💡</span>
+            <div>
+              <div class="fw-semibold mb-1">Assistant
+                <span class="badge {{ 'bg-success' if source=='ai' else 'bg-secondary' }} ms-1">
+                  {{ 'AI' if source=='ai' else 'rules' }}</span>
+                {% if match_count is not none %}
+                  <span class="text-muted small ms-1">· {{ match_count }} match{{ '' if match_count==1 else 'es' }}</span>
+                {% endif %}
+              </div>
+              <p class="mb-0" style="white-space:pre-line">{{ answer }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if properties %}
+      <h6 class="text-muted mb-2">Matching properties</h6>
+      <div class="row g-3">
+        {% for p in properties %}
+          <div class="col-md-6">
+            <a href="{{ url_for('detail', pid=p.id) }}" class="text-decoration-none">
+              <div class="card h-100 shadow-sm hover-lift">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-semibold text-dark">{{ p.address }}</span>
+                    <span class="badge bg-brand">{{ p.investment_score }}</span>
+                  </div>
+                  <div class="text-muted small">{{ p.city }}{% if p.state %}, {{ p.state }}{% endif %}
+                    · {{ p.property_type }}</div>
+                  <div class="mt-2 d-flex justify-content-between align-items-end">
+                    <span class="fs-5 fw-bold text-dark">{{ p.price|money }}</span>
+                    <span class="small text-muted">
+                      {{ p.beds }}bd · {{ p.baths }}ba · {{ p.rental_yield }}% yield</span>
+                  </div>
+                  {% if (p.undervalued_pct or 0) > 0 %}
+                    <div class="mt-1"><span class="badge bg-success-subtle text-success-emphasis">
+                      {{ p.undervalued_pct }}% below market</span></div>
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% elif answer %}
+      <p class="text-muted">No listings matched — try broadening the price, city, or beds.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

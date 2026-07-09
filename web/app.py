@@ -297,6 +297,27 @@ def create_app() -> Flask:
             flash(f"Could not load alerts: {exc}", "danger")
         return render_template("alerts.html", alerts=alist, scan=scan, city=city)
 
+    @app.route("/assistant")
+    def assistant():
+        q = request.args.get("q", "").strip()
+        examples = [
+            "3-bedroom houses under $150k with high rental yield",
+            "Which city has the highest rental yield?",
+            "Show me the most undervalued properties",
+            "Cheapest apartments in Dallas",
+        ]
+        ctx = {"q": q, "examples": examples, "answer": None, "source": None,
+               "properties": [], "match_count": None}
+        if q:
+            try:
+                data = _api("POST", "/api/assistant/chat", json={"question": q}).json()
+                ctx.update(answer=data.get("answer"), source=data.get("source"),
+                           properties=data.get("properties", []),
+                           match_count=data.get("match_count"))
+            except Exception as exc:  # noqa: BLE001
+                flash(f"Could not reach the assistant: {exc}", "danger")
+        return render_template("assistant.html", **ctx)
+
     @app.route("/healthz")
     def healthz():
         return {"status": "ok"}

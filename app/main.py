@@ -10,6 +10,7 @@ from app import __version__
 from app.api.routers import (
     admin,
     analytics,
+    assistant,
     auth,
     comparison,
     deals,
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     app.include_router(monitor.router)
     app.include_router(import_data.router)
+    app.include_router(assistant.router)
 
     @app.get("/", tags=["system"])
     def root() -> dict:
